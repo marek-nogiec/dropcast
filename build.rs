@@ -2,8 +2,6 @@ use sha2::{Digest, Sha256};
 use std::env;
 use std::fmt::Write as _;
 use std::fs;
-use std::fs::File;
-use std::io;
 use std::path::{Path, PathBuf};
 
 const RELEASE: &str = "b6.1.1";
@@ -53,52 +51,6 @@ fn verify(path: &Path, expected: &str) {
     );
 }
 
-fn unpacked_size(archive: &Path) -> u64 {
-    let bytes = fs::read(archive).expect("could not read bundled FFmpeg archive");
-    let trailer = bytes
-        .get(bytes.len().checked_sub(4).expect("FFmpeg archive is empty")..)
-        .expect("FFmpeg archive has no gzip size trailer");
-    u64::from(u32::from_le_bytes(
-        trailer.try_into().expect("gzip size trailer is four bytes"),
-    ))
-}
-
-fn make_executable(path: &Path) -> io::Result<()> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mut permissions = path.metadata()?.permissions();
-        permissions.set_mode(0o755);
-        fs::set_permissions(path, permissions)?;
-    }
-    Ok(())
-}
-
-fn install_ffmpeg(archive: &Path, destination: &Path) {
-    let expected_size = unpacked_size(archive);
-    if destination
-        .metadata()
-        .is_ok_and(|metadata| metadata.is_file() && metadata.len() == expected_size)
-    {
-        make_executable(destination).expect("could not mark bundled FFmpeg executable");
-        return;
-    }
-
-    let temporary = destination.with_extension("tmp");
-    let input = File::open(archive).expect("could not open bundled FFmpeg archive");
-    let mut decoder = flate2::read::GzDecoder::new(input);
-    let mut output = File::create(&temporary).expect("could not create bundled FFmpeg executable");
-    io::copy(&mut decoder, &mut output).expect("could not unpack bundled FFmpeg executable");
-    output
-        .sync_all()
-        .expect("could not flush bundled FFmpeg executable");
-    make_executable(&temporary).expect("could not mark bundled FFmpeg executable");
-    if destination.exists() {
-        fs::remove_file(destination).expect("could not replace bundled FFmpeg executable");
-    }
-    fs::rename(temporary, destination).expect("could not install bundled FFmpeg executable");
-}
-
 fn download(url: &str, destination: &Path) {
     println!("cargo:warning=Downloading pinned FFmpeg bundle from {url}");
     let mut response = ureq::get(url)
@@ -144,15 +96,9 @@ fn main() {
     };
 
     verify(&archive, checksum);
-    let out_dir = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo did not provide OUT_DIR"));
-    let profile_dir = out_dir
-        .ancestors()
-        .nth(3)
-        .expect("unexpected Cargo OUT_DIR layout");
-    let executable = if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
-        "dropcast-ffmpeg.exe"
-    } else {
-        "dropcast-ffmpeg"
-    };
-    install_ffmpeg(&archive, &profile_dir.join(executable));
+    println!(
+        "cargo:rustc-env=DROPCAST_FFMPEG_ARCHIVE={}",
+        archive.display()
+    );
+    println!("cargo:rustc-env=DROPCAST_FFMPEG_RELEASE={RELEASE}");
 }

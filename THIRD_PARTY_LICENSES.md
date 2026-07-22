@@ -4,8 +4,8 @@
 
 `dropcast` bundles a prebuilt FFmpeg executable from the
 [`ffmpeg-static` b6.1.1 release](https://github.com/eugeneware/ffmpeg-static/releases/tag/b6.1.1).
-FFmpeg is a separate program shipped beside `dropcast` and executed for
-subtitle inspection and conversion.
+FFmpeg is a separate program embedded in compressed form. `dropcast` extracts
+and executes it for subtitle inspection and conversion.
 
 FFmpeg is primarily licensed under LGPL 2.1 or later. Builds that enable GPL
 components are licensed under GPL 2 or later; the bundled build may include

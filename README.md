@@ -9,7 +9,7 @@ discovers subtitle tracks and lets you switch between them during playback.
 
 ## Features
 
-- Small native Rust executable with no Node.js runtime
+- Single native executable with no Node.js runtime
 - Google Cast discovery over mDNS
 - Keyboard-navigable receiver picker
 - Direct LAN streaming with HTTP byte ranges
@@ -26,16 +26,18 @@ Install a current stable Rust toolchain, then:
 cargo build --release
 ```
 
-The build creates two files that must remain together:
+The standalone executable is created at:
 
 ```text
 target/release/dropcast
-target/release/dropcast-ffmpeg
 ```
 
-The FFmpeg companion is unpacked during the build, not at runtime. A release
-archive compresses it efficiently while installation and startup require no
-cache extraction.
+FFmpeg is compressed inside that executable. To install it in Cargo's binary
+directory:
+
+```sh
+cargo install --path .
+```
 
 ## Run
 
@@ -75,9 +77,11 @@ switch tracks; `None` disables subtitles and is selected initially.
 
 ## Subtitle support
 
-WebVTT and SRT sidecars are handled natively. The `dropcast-ffmpeg` companion
-handles ASS/SSA and embedded text tracks. No system FFmpeg or ffprobe
-installation is required.
+WebVTT and SRT sidecars are handled natively. The FFmpeg payload embedded in
+`dropcast` handles ASS/SSA and embedded text tracks. No system FFmpeg or ffprobe
+installation is required. It is unpacked into the user cache when first needed
+because operating systems cannot execute a program directly from embedded
+bytes.
 Bitmap subtitles such as PGS and VobSub cannot be used through the Cast
 text-track API.
 
@@ -91,13 +95,14 @@ text-track API.
 - **Playback starts and immediately stops:** allow incoming `dropcast`
   connections through the computer's firewall. The TV fetches the movie from a
   randomized local URL.
-- **Bundled FFmpeg was not found:** keep `dropcast-ffmpeg` in the same directory
-  as `dropcast`. If you move or install the app, move both files together.
+- **The first subtitle scan takes a moment:** the embedded FFmpeg payload is
+  unpacked into the user cache once; subsequent runs reuse it.
 
 `dropcast` streams the movie directly and does not transcode it.
 
 ## Bundled FFmpeg
 
 The FFmpeg executable is downloaded from the pinned `ffmpeg-static` `b6.1.1`
-release at compile time and placed beside `dropcast`. It is licensed separately
-under the terms described in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+release at compile time and compressed into `dropcast`. It is licensed
+separately under the terms described in
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
