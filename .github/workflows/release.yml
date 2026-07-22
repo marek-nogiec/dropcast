@@ -1,0 +1,118 @@
+name: Release macOS ARM64
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release:
+    name: Test, build, and release
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_TERM_COLOR: always
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install stable Rust
+        run: |
+          rustup set profile minimal
+          rustup toolchain install stable --no-self-update
+          rustup default stable
+
+      - name: Run tests
+        run: cargo test --locked --release
+
+      - name: Build release binary
+        run: cargo build --locked --release
+
+      - name: Verify target architecture
+        run: |
+          file target/release/dropcast
+          file target/release/dropcast | grep -q "arm64"
+          test "$(target/release/dropcast --version)" = "$(cargo metadata --locked --no-deps --format-version 1 | python3 -c 'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
+
+      - name: Package release
+        id: package
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          version="$(cargo metadata --locked --no-deps --format-version 1 | python3 -c 'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
+          tag="v${version}-build.${RUN_NUMBER}"
+          package_name="dropcast-${version}-build.${RUN_NUMBER}-macos-arm64"
+          archive="${package_name}.tar.gz"
+          checksum_file="${package_name}-SHA256SUMS.txt"
+
+          mkdir -p "dist/${package_name}"
+          cp target/release/dropcast README.md LICENSE THIRD_PARTY_LICENSES.md "dist/${package_name}/"
+          COPYFILE_DISABLE=1 tar -C dist -czf "dist/${archive}" "${package_name}"
+
+          checksum="$(shasum -a 256 "dist/${archive}" | awk '{print $1}')"
+          printf '%s  %s\n' "$checksum" "$archive" > "dist/${checksum_file}"
+
+          cat > dist/release-summary.md <<EOF
+          ## macOS Apple Silicon
+
+          | | |
+          | --- | --- |
+          | Target | macOS ARM64 (Apple Silicon) |
+          | Version | \`${version}\` |
+          | Source | [\`${COMMIT_SHA}\`](https://github.com/${GITHUB_REPOSITORY}/commit/${COMMIT_SHA}) |
+          | Archive | \`${archive}\` |
+          | Signing | Unsigned and not notarized |
+
+          The archive contains the \`dropcast\` executable, README, license, and bundled FFmpeg notices.
+
+          ### Verify the download
+
+          Download the archive and \`${checksum_file}\` into the same directory, then run:
+
+          \`\`\`sh
+          shasum -a 256 -c ${checksum_file}
+          \`\`\`
+
+          Expected SHA-256:
+
+          \`\`\`text
+          ${checksum}
+          \`\`\`
+          EOF
+
+          {
+            echo "tag=${tag}"
+            echo "title=dropcast ${version} (build ${RUN_NUMBER})"
+            echo "archive=dist/${archive}"
+            echo "checksum_file=dist/${checksum_file}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        env:
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+          CHECKSUM_FILE: ${{ steps.package.outputs.checksum_file }}
+          RELEASE_TAG: ${{ steps.package.outputs.tag }}
+          RELEASE_TITLE: ${{ steps.package.outputs.title }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "$ARCHIVE#macOS ARM64 archive" \
+            "$CHECKSUM_FILE#SHA-256 checksums" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_TITLE" \
+            --notes "$(cat dist/release-summary.md)" \
+            --generate-notes
+
+          release_url="$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json url --jq .url)"
+          printf '## Release published\n\n[%s](%s)\n' "$RELEASE_TAG" "$release_url" >> "$GITHUB_STEP_SUMMARY"

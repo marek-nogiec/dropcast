@@ -39,6 +39,21 @@ directory:
 cargo install --path .
 ```
 
+## Download
+
+Each push to the default branch publishes a GitHub release containing a native
+macOS ARM64 build for Apple Silicon. Download the `.tar.gz` archive and its
+matching `SHA256SUMS.txt` file into the same directory, then verify and install
+it with:
+
+```sh
+shasum -a 256 -c dropcast-*-SHA256SUMS.txt
+tar -xzf dropcast-*-macos-arm64.tar.gz
+sudo install -m 0755 dropcast-*-macos-arm64/dropcast /usr/local/bin/dropcast
+```
+
+The release binaries are currently unsigned and not notarized.
+
 ## Run
 
 ```sh
