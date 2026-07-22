@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "bootstrap-sha": "5282e0d10b1bde567ab12b5a23f89e1026f29016",
+  "bootstrap-sha": "f6480bbcb86d1534356e63005f32014d1ec9b327",
   "packages": {
     ".": {
       "release-type": "rust",
@@ -13,9 +13,8 @@
         "LICENSE",
         "README.md",
         "THIRD_PARTY_LICENSES.md",
-        "lefthook.yml",
-        "release-please-config.json",
-        "scripts"
+        "cog.toml",
+        "release-please-config.json"
       ]
     }
   }

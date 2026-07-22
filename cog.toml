@@ -1,0 +1,10 @@
+tag_prefix = "v"
+ignore_merge_commits = true
+
+[commit_types]
+deps = { changelog_title = "Dependencies", bump_patch = true }
+
+[git_hooks.commit-msg]
+script = """#!/bin/sh
+cog verify --file "$1"
+"""

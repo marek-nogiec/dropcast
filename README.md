@@ -67,18 +67,18 @@ release; and builds and attaches the macOS artifact.
 
 ## Development
 
-Install [Lefthook](https://lefthook.dev/installation/) and enable the repository
-hooks after cloning:
+Install [Cocogitto](https://docs.cocogitto.io/) and enable its commit-message
+hook after cloning:
 
 ```sh
-lefthook install
+brew install cocogitto
+cog install-hook commit-msg
 ```
 
-The `commit-msg` hook requires Conventional Commits subjects such as
-`feat(cast): add playback queue support` or `fix: handle an empty subtitle`.
-Accepted types are `build`, `chore`, `ci`, `deps`, `docs`, `feat`, `fix`,
-`perf`, `refactor`, `revert`, `style`, and `test`. Add `!` before the colon for
-a breaking change.
+Use commands such as `cog commit feat "add playback queue support" cast` to
+create commits. The installed hook verifies commits made through regular Git as
+well, and the same check runs in GitHub Actions for pushes and pull requests.
+The project also accepts the custom `deps` type used by Release Please.
 
 ## Run
 
