@@ -20,9 +20,11 @@ discovers subtitle tracks and lets you switch between them during playback.
 
 ## Build
 
-Install a current stable Rust toolchain, then:
+Install a current stable Rust toolchain and the standard C build tools, then
+build the pinned FFmpeg source and `dropcast`:
 
 ```sh
+scripts/build-ffmpeg.sh
 cargo build --release
 ```
 
@@ -32,8 +34,8 @@ The standalone executable is created at:
 target/release/dropcast
 ```
 
-FFmpeg is compressed inside that executable. To install it in Cargo's binary
-directory:
+FFmpeg is compressed inside that executable. After building the FFmpeg bundle,
+install `dropcast` in Cargo's binary directory with:
 
 ```sh
 cargo install --path .
@@ -143,15 +145,11 @@ text-track API.
 
 ## Bundled FFmpeg
 
-The FFmpeg executable is downloaded from the pinned `ffmpeg-static` `b6.1.1`
-release at compile time and compressed into `dropcast`. It is licensed
-separately under the terms described in
+The FFmpeg executable is built from pinned official FFmpeg 6.1.6 source with
+external libraries, GPL components, and nonfree components disabled. The build
+script verifies the source SHA-256 and records the configuration before
+compressing the executable for embedding. See
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
-
-Binary release artifacts are temporarily disabled because the previously
-bundled macOS FFmpeg build was configured as non-redistributable. Building from
-source still downloads and embeds that asset for personal use; do not
-redistribute the resulting executable until the bundle is replaced.
 
 ## Contributing and security
 

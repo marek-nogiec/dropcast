@@ -1,7 +1,8 @@
 # Repository guidance
 
-`dropcast` is a Rust 2024 CLI. Application code lives in `src/`; `build.rs`
-downloads a pinned FFmpeg archive and verifies its SHA-256 before embedding it.
+`dropcast` is a Rust 2024 CLI. Application code lives in `src/`;
+`scripts/build-ffmpeg.sh` builds the pinned LGPL-only FFmpeg archive embedded by
+`build.rs`.
 Keep `Cargo.lock` committed and avoid committing media, subtitle, `target/`, or
 other generated files.
 
@@ -14,7 +15,7 @@ cargo test --locked
 ```
 
 Tests need permission to bind a local socket and execute the bundled FFmpeg.
-For offline builds, set `DROPCAST_FFMPEG_ARCHIVE` to the matching pinned archive.
+For offline builds, set `DROPCAST_FFMPEG_ARCHIVE` to a compatible gzip archive.
 Add or update focused unit tests with behavior changes.
 
 `.github/workflows/release.yml` runs Release Please after pushes to `main`.

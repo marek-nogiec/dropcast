@@ -34,6 +34,12 @@ jobs:
           rustup toolchain install stable --component clippy,rustfmt --no-self-update
           rustup default stable
 
+      - name: Prepare runner FFmpeg
+        run: |
+          ffmpeg_path="$(command -v ffmpeg)"
+          gzip -9 -n -c "$ffmpeg_path" > "$RUNNER_TEMP/ffmpeg.gz"
+          echo "DROPCAST_FFMPEG_ARCHIVE=$RUNNER_TEMP/ffmpeg.gz" >> "$GITHUB_ENV"
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
