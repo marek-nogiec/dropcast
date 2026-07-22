@@ -82,11 +82,26 @@ jobs:
           rustup toolchain install stable --no-self-update
           rustup default stable
 
+      - name: Restore cached FFmpeg
+        id: ffmpeg-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ runner.temp }}/ffmpeg.gz
+            ${{ runner.temp }}/ffmpeg-6.1.6.tar.xz
+          key: dropcast-ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/build-ffmpeg.sh') }}
+
       - name: Build redistributable FFmpeg
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
         run: |
           scripts/build-ffmpeg.sh \
             "$RUNNER_TEMP/ffmpeg.gz" \
             "$RUNNER_TEMP/ffmpeg-6.1.6.tar.xz"
+
+      - name: Select release FFmpeg
+        run: |
+          test -f "$RUNNER_TEMP/ffmpeg.gz"
+          test -f "$RUNNER_TEMP/ffmpeg-6.1.6.tar.xz"
           echo "DROPCAST_FFMPEG_ARCHIVE=$RUNNER_TEMP/ffmpeg.gz" >> "$GITHUB_ENV"
 
       - name: Run tests
