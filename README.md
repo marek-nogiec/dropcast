@@ -9,7 +9,6 @@ discovers subtitle tracks and lets you switch between them during playback.
 
 ## Features
 
-- Single native executable with no Node.js runtime
 - Google Cast discovery over mDNS
 - Keyboard-navigable receiver picker
 - Direct LAN streaming with HTTP byte ranges
