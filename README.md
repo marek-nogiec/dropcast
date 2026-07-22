@@ -41,10 +41,9 @@ cargo install --path .
 
 ## Download
 
-Each push to the default branch publishes a GitHub release containing a native
-macOS ARM64 build for Apple Silicon. Download the `.tar.gz` archive and its
-matching `SHA256SUMS.txt` file into the same directory, then verify and install
-it with:
+Each GitHub release contains a native macOS ARM64 build for Apple Silicon.
+Download the `.tar.gz` archive and its matching `SHA256SUMS.txt` file into the
+same directory, then verify and install it with:
 
 ```sh
 shasum -a 256 -c dropcast-*-SHA256SUMS.txt
@@ -53,6 +52,33 @@ sudo install -m 0755 dropcast-*-macos-arm64/dropcast /usr/local/bin/dropcast
 ```
 
 The release binaries are currently unsigned and not notarized.
+
+## Releases
+
+[Release Please](https://github.com/googleapis/release-please) maintains a
+release pull request from Conventional Commits that change the Rust source or
+build inputs. `fix` and `deps` produce a patch release, `feat` produces a minor
+release, and a `!` or `BREAKING CHANGE` footer produces a major release. Other
+commit types do not start a release by themselves.
+
+Merging the release pull request updates `Cargo.toml`, `Cargo.lock`, this
+changelog, and the release manifest; creates a `v<version>` tag and GitHub
+release; and builds and attaches the macOS artifact.
+
+## Development
+
+Install [Lefthook](https://lefthook.dev/installation/) and enable the repository
+hooks after cloning:
+
+```sh
+lefthook install
+```
+
+The `commit-msg` hook requires Conventional Commits subjects such as
+`feat(cast): add playback queue support` or `fix: handle an empty subtitle`.
+Accepted types are `build`, `chore`, `ci`, `deps`, `docs`, `feat`, `fix`,
+`perf`, `refactor`, `revert`, `style`, and `test`. Add `!` before the colon for
+a breaking change.
 
 ## Run
 

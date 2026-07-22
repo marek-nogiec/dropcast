@@ -1,0 +1,4 @@
+commit-msg:
+  commands:
+    conventional-commit:
+      run: scripts/check-conventional-commit.sh "{1}"

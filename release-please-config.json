@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "5282e0d10b1bde567ab12b5a23f89e1026f29016",
+  "packages": {
+    ".": {
+      "release-type": "rust",
+      "include-component-in-tag": false,
+      "exclude-paths": [
+        ".gitignore",
+        ".github",
+        ".release-please-manifest.json",
+        "CHANGELOG.md",
+        "LICENSE",
+        "README.md",
+        "THIRD_PARTY_LICENSES.md",
+        "lefthook.yml",
+        "release-please-config.json",
+        "scripts"
+      ]
+    }
+  }
+}
