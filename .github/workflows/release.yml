@@ -52,6 +52,8 @@ jobs:
       - name: Update release pull request or create release
         id: release
         uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
   release:
     name: Build and upload macOS ARM64 artifact
