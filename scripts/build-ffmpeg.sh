@@ -22,6 +22,12 @@ case "$output" in
   /*) output_path=$output ;;
   *) output_path="$project_dir/$output" ;;
 esac
+source_output=${2:-}
+case "$source_output" in
+  "") source_output_path= ;;
+  /*) source_output_path=$source_output ;;
+  *) source_output_path="$project_dir/$source_output" ;;
+esac
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/dropcast-ffmpeg-build.XXXXXX")
 trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
 
@@ -32,6 +38,12 @@ actual_sha256=$(shasum -a 256 "$archive" | awk '{print $1}')
 if test "$actual_sha256" != "$source_sha256"; then
   echo "FFmpeg source checksum mismatch" >&2
   exit 1
+fi
+
+if test -n "$source_output_path"; then
+  mkdir -p "$(dirname "$source_output_path")"
+  cp "$archive" "$source_output_path.tmp"
+  mv "$source_output_path.tmp" "$source_output_path"
 fi
 
 tar -xJf "$archive" -C "$work_dir"

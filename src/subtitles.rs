@@ -386,31 +386,15 @@ mod tests {
 
         let ffmpeg = bundled_ffmpeg::path().unwrap();
         let status = Command::new(ffmpeg)
-            .args([
-                "-nostdin",
-                "-hide_banner",
-                "-loglevel",
-                "error",
-                "-y",
-                "-f",
-                "lavfi",
-                "-i",
-                "color=c=black:s=32x32:d=1",
-                "-i",
-            ])
+            .args(["-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i"])
             .arg(&captions)
             .args([
                 "-map",
-                "0:v",
-                "-map",
-                "1:0",
-                "-c:v",
-                "mpeg4",
+                "0:0",
                 "-c:s",
                 "mov_text",
                 "-metadata:s:s:0",
                 "language=eng",
-                "-shortest",
             ])
             .arg(&movie)
             .status()

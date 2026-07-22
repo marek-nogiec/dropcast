@@ -14,6 +14,9 @@ The exact corresponding source and reproducible build instructions are:
 - Build script: [`scripts/build-ffmpeg.sh`](scripts/build-ffmpeg.sh)
 - License text: [`LICENSES/FFmpeg-LGPL-2.1.txt`](LICENSES/FFmpeg-LGPL-2.1.txt)
 
+Binary releases also attach the exact `ffmpeg-6.1.6.tar.xz` source archive used
+for the bundled executable.
+
 License and project information:
 
 - [FFmpeg legal information](https://ffmpeg.org/legal.html)
