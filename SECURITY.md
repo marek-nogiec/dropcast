@@ -2,8 +2,9 @@
 
 ## Supported versions
 
-The latest release and the current `main` branch receive security fixes. Older
-releases are not supported.
+Before the first public release, the current `main` branch receives security
+fixes. After releases begin, the latest release and `main` will be supported;
+older releases will not be supported.
 
 ## Reporting a vulnerability
 
