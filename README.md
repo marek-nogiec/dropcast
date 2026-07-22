@@ -5,18 +5,18 @@ Google Cast built in.
 
 `dropcast` discovers receivers on the local network, presents an arrow-key
 device picker, and serves the movie with byte-range support for seeking. It also
-discovers subtitle tracks and enables the first one automatically.
+discovers subtitle tracks and lets you switch between them during playback.
 
 ## Features
 
-- Single native binary with no Node.js runtime
+- Small native Rust executable with no Node.js runtime
 - Google Cast discovery over mDNS
 - Keyboard-navigable receiver picker
 - Direct LAN streaming with HTTP byte ranges
 - Automatic matching sidecars such as `movie.en.srt`
-- Embedded text subtitle discovery when `ffprobe` and `ffmpeg` are installed
+- Bundled FFmpeg for embedded text subtitle discovery and conversion
 - Repeatable explicit `--subtitle` files
-- First subtitle track enabled by default
+- Live keyboard subtitle picker with a `None` option selected by default
 
 ## Build
 
@@ -26,12 +26,16 @@ Install a current stable Rust toolchain, then:
 cargo build --release
 ```
 
-The standalone binary is created at `target/release/dropcast`. To install it in
-Cargo's binary directory:
+The build creates two files that must remain together:
 
-```sh
-cargo install --path .
+```text
+target/release/dropcast
+target/release/dropcast-ffmpeg
 ```
+
+The FFmpeg companion is unpacked during the build, not at runtime. A release
+archive compresses it efficiently while installation and startup require no
+cache extraction.
 
 ## Run
 
@@ -55,7 +59,8 @@ dropcast movie.mp4 --subtitle english.srt --subtitle polish.vtt
 ```
 
 Explicit files are listed first, followed by matching sidecars, then embedded
-text tracks. The TV's subtitle menu can switch between available tracks.
+text tracks. During playback, use the arrow keys and Enter in `dropcast` to
+switch tracks; `None` disables subtitles and is selected initially.
 
 ## Options
 
@@ -70,10 +75,11 @@ text tracks. The TV's subtitle menu can switch between available tracks.
 
 ## Subtitle support
 
-WebVTT and SRT sidecars are handled natively. ASS and SSA sidecars, plus
-embedded text tracks, require `ffmpeg` and `ffprobe` on `PATH`; keeping these
-large media tools external lets the `dropcast` binary stay small. Bitmap
-subtitles such as PGS and VobSub cannot be used through the Cast text-track API.
+WebVTT and SRT sidecars are handled natively. The `dropcast-ffmpeg` companion
+handles ASS/SSA and embedded text tracks. No system FFmpeg or ffprobe
+installation is required.
+Bitmap subtitles such as PGS and VobSub cannot be used through the Cast
+text-track API.
 
 ## Troubleshooting
 
@@ -85,7 +91,13 @@ subtitles such as PGS and VobSub cannot be used through the Cast text-track API.
 - **Playback starts and immediately stops:** allow incoming `dropcast`
   connections through the computer's firewall. The TV fetches the movie from a
   randomized local URL.
-- **Embedded subtitles are skipped:** install FFmpeg so both `ffmpeg` and
-  `ffprobe` are available.
+- **Bundled FFmpeg was not found:** keep `dropcast-ffmpeg` in the same directory
+  as `dropcast`. If you move or install the app, move both files together.
 
 `dropcast` streams the movie directly and does not transcode it.
+
+## Bundled FFmpeg
+
+The FFmpeg executable is downloaded from the pinned `ffmpeg-static` `b6.1.1`
+release at compile time and placed beside `dropcast`. It is licensed separately
+under the terms described in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

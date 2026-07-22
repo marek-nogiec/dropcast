@@ -17,7 +17,7 @@ Options:
   -v, --version           Show the version
 
 The computer and TV must be on the same network. Use the arrow keys and Enter
-to choose a receiver. Press Ctrl+C to stop casting."#;
+to choose a receiver and switch subtitles. Press Ctrl+C to stop casting."#;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct CliOptions {

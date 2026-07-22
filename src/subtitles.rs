@@ -1,4 +1,3 @@
-use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -6,6 +5,7 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::DynError;
+use crate::bundled_ffmpeg;
 
 const SIDECAR_EXTENSIONS: &[&str] = &["ass", "srt", "ssa", "vtt"];
 const TEXT_CODECS: &[&str] = &[
@@ -31,17 +31,10 @@ impl Drop for PreparedSubtitles {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct ProbeOutput {
-    #[serde(default)]
-    streams: Vec<ProbeStream>,
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Eq)]
 struct ProbeStream {
     index: u32,
     codec_name: String,
-    #[serde(default)]
     tags: HashMap<String, String>,
 }
 
@@ -121,7 +114,7 @@ pub fn srt_to_vtt(input: &str) -> String {
     output
 }
 
-fn convert_external(source: &Path, output: &Path) -> Result<bool, DynError> {
+fn convert_external(ffmpeg: &Path, source: &Path, output: &Path) -> Result<bool, DynError> {
     match extension(source).as_str() {
         "vtt" => {
             fs::copy(source, output)?;
@@ -132,7 +125,7 @@ fn convert_external(source: &Path, output: &Path) -> Result<bool, DynError> {
             fs::write(output, srt_to_vtt(&contents))?;
             Ok(true)
         }
-        _ => match Command::new("ffmpeg")
+        _ => match Command::new(ffmpeg)
             .args(["-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i"])
             .arg(source)
             .args(["-c:s", "webvtt"])
@@ -140,54 +133,79 @@ fn convert_external(source: &Path, output: &Path) -> Result<bool, DynError> {
             .status()
         {
             Ok(status) => Ok(status.success()),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
             Err(error) => Err(error.into()),
         },
     }
 }
 
-fn probe_embedded(movie: &Path) -> Result<Option<Vec<ProbeStream>>, DynError> {
-    let output = match Command::new("ffprobe")
-        .args([
-            "-v",
-            "error",
-            "-select_streams",
-            "s",
-            "-show_entries",
-            "stream=index,codec_name:stream_tags=language,title",
-            "-of",
-            "json",
-        ])
-        .arg(movie)
-        .output()
-    {
-        Ok(output) => output,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error.into()),
-    };
+fn parse_stream_listing(output: &str) -> Vec<ProbeStream> {
+    let mut streams = Vec::new();
+    for line in output.lines() {
+        let Some(descriptor) = line.trim().strip_prefix("Stream #") else {
+            continue;
+        };
+        let Some((stream_id, codec_text)) = descriptor.split_once(": Subtitle: ") else {
+            continue;
+        };
+        let Some((_, stream_detail)) = stream_id.split_once(':') else {
+            continue;
+        };
+        let index_text: String = stream_detail
+            .chars()
+            .take_while(char::is_ascii_digit)
+            .collect();
+        let Ok(index) = index_text.parse::<u32>() else {
+            continue;
+        };
+        let codec_name = codec_text
+            .split(|character: char| character == ',' || character.is_ascii_whitespace())
+            .next()
+            .unwrap_or_default()
+            .to_lowercase();
+        if !TEXT_CODECS.contains(&codec_name.as_str()) {
+            continue;
+        }
 
-    if !output.status.success() {
-        return Ok(Some(Vec::new()));
+        let mut tags = HashMap::new();
+        if let Some(start) = stream_detail.find('(')
+            && let Some(end) = stream_detail[start + 1..].find(')')
+        {
+            tags.insert(
+                "language".to_owned(),
+                stream_detail[start + 1..start + 1 + end].to_owned(),
+            );
+        }
+        streams.push(ProbeStream {
+            index,
+            codec_name,
+            tags,
+        });
     }
-
-    let mut streams: ProbeOutput = serde_json::from_slice(&output.stdout)?;
+    streams.sort_by_key(|stream| stream.index);
     streams
-        .streams
-        .retain(|stream| TEXT_CODECS.contains(&stream.codec_name.as_str()));
-    streams.streams.sort_by_key(|stream| stream.index);
-    Ok(Some(streams.streams))
+}
+
+fn probe_embedded(ffmpeg: &Path, movie: &Path) -> Result<Vec<ProbeStream>, DynError> {
+    let output = Command::new(ffmpeg)
+        .args(["-nostdin", "-hide_banner", "-i"])
+        .arg(movie)
+        .output()?;
+    Ok(parse_stream_listing(&String::from_utf8_lossy(
+        &output.stderr,
+    )))
 }
 
 fn extract_embedded(
+    ffmpeg: &Path,
     movie: &Path,
     streams: &[ProbeStream],
     temp_dir: &Path,
-) -> Result<Option<Vec<SubtitleTrack>>, DynError> {
+) -> Result<Vec<SubtitleTrack>, DynError> {
     if streams.is_empty() {
-        return Ok(Some(Vec::new()));
+        return Ok(Vec::new());
     }
 
-    let mut command = Command::new("ffmpeg");
+    let mut command = Command::new(ffmpeg);
     command.args(["-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i"]);
     command.arg(movie);
     let mut outputs = Vec::new();
@@ -200,41 +218,36 @@ fn extract_embedded(
         outputs.push(output);
     }
 
-    let status = match command.status() {
-        Ok(status) => status,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error.into()),
-    };
+    let status = command.status()?;
     if !status.success() {
-        return Ok(Some(Vec::new()));
+        return Ok(Vec::new());
     }
 
-    Ok(Some(
-        streams
-            .iter()
-            .zip(outputs)
-            .enumerate()
-            .map(|(position, (stream, path))| {
-                let language = stream.tags.get("language").cloned();
-                let name = stream
-                    .tags
-                    .get("title")
-                    .cloned()
-                    .or_else(|| language.as_ref().map(|value| format!("{value} (embedded)")))
-                    .unwrap_or_else(|| format!("Embedded subtitle {}", position + 1));
-                SubtitleTrack {
-                    path,
-                    name,
-                    language,
-                }
-            })
-            .collect(),
-    ))
+    Ok(streams
+        .iter()
+        .zip(outputs)
+        .enumerate()
+        .map(|(position, (stream, path))| {
+            let language = stream.tags.get("language").cloned();
+            let name = stream
+                .tags
+                .get("title")
+                .cloned()
+                .or_else(|| language.as_ref().map(|value| format!("{value} (embedded)")))
+                .unwrap_or_else(|| format!("Embedded subtitle {}", position + 1));
+            SubtitleTrack {
+                path,
+                name,
+                language,
+            }
+        })
+        .collect())
 }
 
 pub fn prepare(movie: &Path, explicit: &[PathBuf]) -> Result<PreparedSubtitles, DynError> {
     let temp_dir = unique_temp_dir()?;
     let result = (|| {
+        let ffmpeg = bundled_ffmpeg::path()?;
         let mut warnings = Vec::new();
         let mut external = Vec::new();
         let mut seen = HashSet::new();
@@ -263,7 +276,7 @@ pub fn prepare(movie: &Path, explicit: &[PathBuf]) -> Result<PreparedSubtitles, 
         let mut tracks = Vec::new();
         for (position, source) in external.iter().enumerate() {
             let output = temp_dir.join(format!("external-{}.vtt", position + 1));
-            if convert_external(source, &output)? {
+            if convert_external(&ffmpeg, source, &output)? {
                 tracks.push(SubtitleTrack {
                     path: output,
                     name: source
@@ -274,25 +287,15 @@ pub fn prepare(movie: &Path, explicit: &[PathBuf]) -> Result<PreparedSubtitles, 
                     language: language_from_sidecar(movie, source),
                 });
             } else {
-                warnings.push(format!(
-                    "Could not convert subtitle {}; install ffmpeg for ASS/SSA support.",
-                    source.display()
-                ));
+                warnings.push(format!("Could not convert subtitle {}.", source.display()));
             }
         }
 
-        match probe_embedded(movie)? {
-            None => warnings
-                .push("ffprobe was not found; embedded subtitle discovery was skipped.".to_owned()),
-            Some(streams) => match extract_embedded(movie, &streams, &temp_dir)? {
-                Some(embedded) if !streams.is_empty() && embedded.is_empty() => warnings.push(
-                    "Embedded text subtitles were found but could not be converted.".to_owned(),
-                ),
-                Some(embedded) => tracks.extend(embedded),
-                None => warnings.push(
-                    "ffmpeg was not found; embedded subtitle extraction was skipped.".to_owned(),
-                ),
-            },
+        let streams = probe_embedded(&ffmpeg, movie)?;
+        match extract_embedded(&ffmpeg, movie, &streams, &temp_dir)? {
+            embedded if !streams.is_empty() && embedded.is_empty() => warnings
+                .push("Embedded text subtitles were found but could not be converted.".to_owned()),
+            embedded => tracks.extend(embedded),
         }
 
         Ok(PreparedSubtitles {
@@ -311,6 +314,17 @@ pub fn prepare(movie: &Path, explicit: &[PathBuf]) -> Result<PreparedSubtitles, 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn fixture_dir() -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "dropcast-embedded-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ))
+    }
 
     #[test]
     fn converts_srt_timestamps_to_webvtt() {
@@ -332,5 +346,87 @@ mod tests {
             language_from_sidecar(Path::new("/tmp/movie.mp4"), Path::new("/tmp/captions.srt")),
             None
         );
+    }
+
+    #[test]
+    fn parses_text_subtitle_streams_and_ignores_bitmap_streams() {
+        let listing = r#"
+          Stream #0:4(pol): Subtitle: subrip (default)
+          Stream #0:2[0x3](eng): Subtitle: mov_text (tx3g)
+          Stream #0:5: Subtitle: hdmv_pgs_subtitle
+        "#;
+        assert_eq!(
+            parse_stream_listing(listing),
+            vec![
+                ProbeStream {
+                    index: 2,
+                    codec_name: "mov_text".to_owned(),
+                    tags: HashMap::from([("language".to_owned(), "eng".to_owned())]),
+                },
+                ProbeStream {
+                    index: 4,
+                    codec_name: "subrip".to_owned(),
+                    tags: HashMap::from([("language".to_owned(), "pol".to_owned())]),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn discovers_and_extracts_an_embedded_subtitle_with_bundled_ffmpeg() {
+        let directory = fixture_dir();
+        fs::create_dir(&directory).unwrap();
+        let captions = directory.join("captions.srt");
+        let movie = directory.join("movie.mp4");
+        fs::write(
+            &captions,
+            "1\n00:00:00,000 --> 00:00:00,800\nBundled subtitle works\n",
+        )
+        .unwrap();
+
+        let ffmpeg = bundled_ffmpeg::path().unwrap();
+        let status = Command::new(ffmpeg)
+            .args([
+                "-nostdin",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=black:s=32x32:d=1",
+                "-i",
+            ])
+            .arg(&captions)
+            .args([
+                "-map",
+                "0:v",
+                "-map",
+                "1:0",
+                "-c:v",
+                "mpeg4",
+                "-c:s",
+                "mov_text",
+                "-metadata:s:s:0",
+                "language=eng",
+                "-shortest",
+            ])
+            .arg(&movie)
+            .status()
+            .unwrap();
+        assert!(status.success());
+
+        let prepared = prepare(&movie, &[]).unwrap();
+        assert_eq!(prepared.tracks.len(), 1);
+        assert_eq!(prepared.tracks[0].language.as_deref(), Some("eng"));
+        assert!(
+            fs::read_to_string(&prepared.tracks[0].path)
+                .unwrap()
+                .contains("Bundled subtitle works")
+        );
+
+        drop(prepared);
+        fs::remove_dir_all(directory).unwrap();
     }
 }

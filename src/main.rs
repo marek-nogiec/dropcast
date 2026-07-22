@@ -1,4 +1,5 @@
 mod args;
+mod bundled_ffmpeg;
 mod cast;
 mod discovery;
 mod range;
