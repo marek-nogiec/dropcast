@@ -19,14 +19,14 @@ jobs:
 
     steps:
       - name: Check out full history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Check conventional commits
-        uses: cocogitto/cocogitto-action@9a9fe03b31c47444290c0d7f9b1ee1b44ee13f20 # v4.1.0
+        uses: cocogitto/cocogitto-action@v4
         with:
           command: check
           args: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || github.event_name == 'push' && !github.event.forced && format('{0}..{1}', github.event.before, github.sha) || '' }}
@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Update release pull request or create release
         id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        uses: googleapis/release-please-action@v5
 
   release:
     name: Build and upload macOS ARM64 artifact
@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Check out released source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.release_please.outputs.sha }}
           persist-credentials: false
@@ -84,7 +84,7 @@ jobs:
 
       - name: Restore cached FFmpeg
         id: ffmpeg-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6
         with:
           path: |
             ${{ runner.temp }}/ffmpeg.gz
