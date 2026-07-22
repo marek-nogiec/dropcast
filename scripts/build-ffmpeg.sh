@@ -58,6 +58,7 @@ cd "$work_dir/ffmpeg-${version}"
   --disable-ffprobe \
   --disable-network \
   --disable-shared \
+  --disable-x86asm \
   --enable-small \
   --enable-static
 
