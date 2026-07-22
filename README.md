@@ -147,3 +147,20 @@ The FFmpeg executable is downloaded from the pinned `ffmpeg-static` `b6.1.1`
 release at compile time and compressed into `dropcast`. It is licensed
 separately under the terms described in
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+Binary release artifacts are temporarily disabled because the previously
+bundled macOS FFmpeg build was configured as non-redistributable. Building from
+source still downloads and embeds that asset for personal use; do not
+redistribute the resulting executable until the bundle is replaced.
+
+## Contributing and security
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening
+a pull request. Please report suspected vulnerabilities using the process in
+[SECURITY.md](SECURITY.md), not a public issue.
+
+## License
+
+`dropcast` is licensed under the GNU General Public License, version 3 or (at
+your option) any later version. See [LICENSE](LICENSE). Third-party components
+remain under their respective licenses.
