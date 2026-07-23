@@ -1,5 +1,9 @@
 # Dropcast
 
+[Website](https://marek-nogiec.github.io/dropcast/) ·
+[Downloads](https://github.com/marek-nogiec/dropcast/releases/latest) ·
+[Source code](https://github.com/marek-nogiec/dropcast)
+
 A native macOS app for streaming a local movie to a Chromecast or a TV with
 Google Cast built in. Drop a movie onto the window, choose a TV, and control
 playback without uploading the file anywhere.
