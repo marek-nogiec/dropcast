@@ -600,7 +600,7 @@ svg {
 }
 
 .section-heading > p:last-child,
-.download-card > div > p {
+.download-card > div:first-child > p {
   margin: 0;
   color: var(--ink-muted);
   font-size: 17px;
@@ -933,7 +933,7 @@ figcaption {
   border-radius: 22px;
 }
 
-.download-card > div > p {
+.download-card > div:first-child > p {
   margin-bottom: 26px;
   font-size: 16px;
 }
