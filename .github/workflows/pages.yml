@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      # Temporary preview trigger; remove before merging.
-      - codex/github-pages
     paths:
       - "docs/**"
       - "scripts/prepare-pages.sh"
