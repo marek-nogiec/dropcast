@@ -2,7 +2,8 @@
 
 [Website](https://marek-nogiec.github.io/dropcast/) ·
 [Downloads](https://github.com/marek-nogiec/dropcast/releases/latest) ·
-[Source code](https://github.com/marek-nogiec/dropcast)
+[Source code](https://github.com/marek-nogiec/dropcast) ·
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-marocreates-FFDD00?logo=buymeacoffee&logoColor=000000)](https://www.buymeacoffee.com/marocreates)
 
 A native macOS app for streaming a local movie to a Chromecast or a TV with
 Google Cast built in. Drop a movie onto the window, choose a TV, and control
