@@ -1,0 +1,85 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "scripts/prepare-pages.sh"
+      - ".github/workflows/pages.yml"
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Prepare site
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Resolve latest macOS app
+        id: app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          app_url="$(
+            gh api "repos/${GITHUB_REPOSITORY}/releases/latest" \
+              --jq '[.assets[] | select(.name | endswith("-macos-arm64.app.zip")) | .browser_download_url][0] // empty' \
+              2>/dev/null || true
+          )"
+          if [ -z "$app_url" ]; then
+            app_url="https://github.com/${GITHUB_REPOSITORY}/releases"
+          fi
+          echo "url=$app_url" >> "$GITHUB_OUTPUT"
+
+      - name: Build site
+        env:
+          DROPCAST_APP_DOWNLOAD_URL: ${{ steps.app.outputs.url }}
+        run: scripts/prepare-pages.sh target/pages
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: target/pages
+
+  deploy:
+    name: Publish site
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publish site
+        id: deployment
+        uses: actions/deploy-pages@v4
