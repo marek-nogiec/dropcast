@@ -1,64 +1,57 @@
-# dropcast
+# Dropcast
 
-A small Rust app and CLI for streaming a local movie to a Chromecast or a TV
-with Google Cast built in.
+A native macOS app for streaming a local movie to a Chromecast or a TV with
+Google Cast built in. Drop a movie onto the window, choose a TV, and control
+playback without uploading the file anywhere.
 
-`dropcast` discovers receivers on the local network, presents an arrow-key
-device picker, and serves the movie with byte-range support for seeking. It also
-discovers subtitle tracks and lets you switch between them during playback.
+Dropcast discovers receivers on the local network and serves the movie with
+byte-range support for seeking. The app includes playback, volume, and subtitle
+controls, follows the macOS light or dark appearance, and keeps the complete
+casting flow in one native window.
+
+The release also includes a command-line companion for terminal users.
 
 ## Features
 
+- Native macOS drag-and-drop app for Apple Silicon
+- Receiver picker with explicit confirmation before casting
+- Playback, seeking, volume, stop, and subtitle controls
+- Automatic light and dark appearances
 - Google Cast discovery over mDNS
-- Keyboard-navigable receiver picker
 - Direct LAN streaming with HTTP byte ranges
 - Automatic matching sidecars such as `movie.en.srt`
 - Bundled FFmpeg for embedded text subtitle discovery and conversion
 - Repeatable explicit `--subtitle` files
-- Live keyboard subtitle picker with a `None` option selected by default
-- Native macOS drag-and-drop app for Apple silicon
-- Explicit receiver confirmation plus playback, volume, seeking, and subtitle controls
+- Optional keyboard-driven CLI with receiver and live subtitle pickers
 
-## Build
+## Build from source
 
 Install a current stable Rust toolchain and the standard C build tools, then
-build the pinned FFmpeg source and `dropcast`:
+build the pinned FFmpeg source and the release binaries:
 
 ```sh
 scripts/build-ffmpeg.sh
 cargo build --release
 ```
 
-The standalone executable is created at:
-
-```text
-target/release/dropcast
-```
-
-On an Apple-silicon Mac, launch the development version of the desktop app with:
-
-```sh
-cargo run --release --bin dropcast-app
-```
-
-Drop a movie onto the window (or use **Browse files…**), select a receiver, and
-confirm with the Cast button. The app keeps the existing direct-LAN streaming
-behavior and adds native playback controls without uploading the movie. Its
-light and dark appearances follow the macOS system setting automatically.
-
-### Build a macOS app
-
-After building the FFmpeg bundle, create a standard Apple-silicon app bundle:
+On an Apple Silicon Mac, package the native app:
 
 ```sh
 scripts/package-macos-app.sh
 open target/macos/Dropcast.app
 ```
 
-The bundle is written to `target/macos/Dropcast.app`. The script supplies the
-Finder/Dock icon, local-network privacy description, Bonjour service declaration,
-and an ad-hoc signature suitable for local use. To sign with an installed
-Developer ID certificate instead, set `CODE_SIGN_IDENTITY`:
+The app bundle is written to `target/macos/Dropcast.app`. To launch the UI
+directly during development:
+
+```sh
+cargo run --release --bin dropcast-app
+```
+
+The packaging script supplies the Finder and Dock icon, local-network privacy
+description, Bonjour service declaration, and an ad-hoc signature suitable for
+local use. To sign with an installed Developer ID certificate instead, set
+`CODE_SIGN_IDENTITY`:
 
 ```sh
 CODE_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
@@ -69,8 +62,8 @@ Distribution outside your own Mac also requires Apple notarization (normally
 with `xcrun notarytool`) and stapling the accepted ticket to the app. The script
 deliberately does not send artifacts or credentials to Apple.
 
-FFmpeg is compressed inside that executable. After building the FFmpeg bundle,
-install `dropcast` in Cargo's binary directory with:
+The optional CLI is created at `target/release/dropcast`. After building the
+FFmpeg bundle, install it in Cargo's binary directory with:
 
 ```sh
 cargo install --path .
@@ -127,7 +120,9 @@ create commits. The installed hook verifies commits made through regular Git as
 well, and the same check runs in GitHub Actions for pushes and pull requests.
 The project also accepts the custom `deps` type used by Release Please.
 
-## Run
+## Command-line bonus
+
+The CLI offers the same direct-LAN streaming core in a keyboard-driven flow:
 
 ```sh
 dropcast "/path/to/movie.mp4"

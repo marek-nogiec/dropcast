@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="background" cx="50%" cy="0%" r="88%">
+      <stop offset="0" stop-color="#44372c"/>
+      <stop offset=".54" stop-color="#1c1a18"/>
+      <stop offset="1" stop-color="#121110"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f4b569"/>
+      <stop offset="1" stop-color="#eb7752"/>
+    </linearGradient>
+    <linearGradient id="accentText" x1="0" y1="0" x2=".85" y2="1">
+      <stop stop-color="#f4b569"/>
+      <stop offset="1" stop-color="#eb7752"/>
+    </linearGradient>
+    <pattern id="movieStripes" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="11" height="22" fill="#3d3935"/>
+      <rect x="11" width="11" height="22" fill="#433e39"/>
+    </pattern>
+    <linearGradient id="movieShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset=".35" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".74"/>
+    </linearGradient>
+    <filter id="windowShadow" x="-30%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="28" stdDeviation="28" flood-color="#000" flood-opacity=".58"/>
+    </filter>
+    <filter id="buttonShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#eb7752" flood-opacity=".35"/>
+    </filter>
+    <clipPath id="windowClip">
+      <rect x="757" y="25" width="387" height="580" rx="18"/>
+    </clipPath>
+    <clipPath id="stillClip">
+      <rect x="775" y="78" width="351" height="216" rx="12"/>
+    </clipPath>
+    <style>
+      .sans {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      }
+      .mono {
+        font-family: "SF Mono", Menlo, Monaco, monospace;
+      }
+    </style>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <circle cx="820" cy="20" r="270" fill="#f4b569" opacity=".025"/>
+
+  <!-- Product lockup: real Dropcast mark and the same typography as the landing page. -->
+  <g transform="translate(64 112)">
+    <rect width="58" height="58" rx="14" fill="url(#accent)"/>
+    <circle cx="29" cy="29" r="15.3" fill="none" stroke="#fff" stroke-opacity=".34" stroke-width="2.5"/>
+    <circle cx="29" cy="29" r="22" fill="none" stroke="#fff" stroke-opacity=".17" stroke-width="2.5"/>
+    <path d="M24.8 20.7v16.6L39.4 29z" fill="#fff"/>
+    <text class="sans" x="75" y="39" fill="#f5f2ed" font-size="29" font-weight="700" letter-spacing="-.6">Dropcast</text>
+  </g>
+
+  <g class="sans">
+    <rect x="64" y="205" width="230" height="32" rx="16" fill="#2b2926" stroke="#fff" stroke-opacity=".09"/>
+    <circle cx="82" cy="221" r="3.5" fill="#6fcf83"/>
+    <text x="94" y="225.5" fill="#bdb7ad" font-size="12" font-weight="600">Native macOS app · Apple Silicon</text>
+
+    <text x="64" y="314" fill="#f5f2ed" font-size="60" font-weight="700" letter-spacing="-2.1">Drop a movie.</text>
+    <text x="64" y="378" fill="#f5f2ed" font-size="60" font-weight="700" letter-spacing="-2.1">Cast it in</text>
+    <text x="304" y="378" fill="url(#accentText)" font-size="60" font-weight="700" letter-spacing="-2.1">one tap.</text>
+
+    <text x="64" y="430" fill="#bdb7ad" font-size="17.5" font-weight="400">
+      <tspan x="64" dy="0">Stream local movies straight from your Mac</tspan>
+      <tspan x="64" dy="27">to Google Cast — with subtitles, no upload.</tspan>
+    </text>
+
+    <g transform="translate(64 508)">
+      <rect width="210" height="48" rx="13" fill="url(#accent)"/>
+      <path d="M25 13v13m0 0-5-5m5 5 5-5M18 33h14" fill="none" stroke="#3e281a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="44" y="30.5" fill="#3e281a" font-size="14.5" font-weight="700">Download for macOS</text>
+    </g>
+  </g>
+
+  <!-- Native app window traced from the real 420 × 596 app layout. -->
+  <g filter="url(#windowShadow)">
+    <rect x="757" y="25" width="387" height="580" rx="18" fill="#1f1d1b" stroke="#fff" stroke-opacity=".12"/>
+    <g clip-path="url(#windowClip)">
+      <rect x="757" y="25" width="387" height="39" fill="#252321"/>
+      <line x1="757" y1="64" x2="1144" y2="64" stroke="#fff" stroke-opacity=".08"/>
+      <circle cx="777" cy="44.5" r="6" fill="#ff5f57"/>
+      <circle cx="796" cy="44.5" r="6" fill="#febc2e"/>
+      <circle cx="815" cy="44.5" r="6" fill="#28c840"/>
+      <g transform="translate(935 35.5)">
+        <rect width="18" height="18" rx="4.5" fill="url(#accent)"/>
+        <circle cx="9" cy="9" r="4.8" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1"/>
+        <path d="M7.2 5.7v6.6l5.8-3.3z" fill="#fff"/>
+      </g>
+      <text class="sans" x="960" y="49" fill="#f5f2ed" font-size="12.5" font-weight="600">Dropcast</text>
+
+      <rect x="775" y="78" width="351" height="216" rx="12" fill="url(#movieStripes)"/>
+      <g clip-path="url(#stillClip)">
+        <rect x="775" y="78" width="351" height="216" fill="url(#movieShade)"/>
+        <text class="mono" x="950.5" y="187" fill="#898076" font-size="10.5" text-anchor="middle" letter-spacing="1.2">MOVIE STILL</text>
+      </g>
+      <rect x="775" y="78" width="351" height="216" rx="12" fill="none" stroke="#fff" stroke-opacity=".09"/>
+
+      <g>
+        <rect x="785" y="88" width="157" height="27" rx="13.5" fill="#000" fill-opacity=".56" stroke="#fff" stroke-opacity=".12"/>
+        <circle cx="798" cy="101.5" r="3.7" fill="#f4b569"/>
+        <text class="sans" x="808" y="105.3" fill="#fff" font-size="10.5" font-weight="600">Casting to Living Room TV</text>
+      </g>
+
+      <text class="sans" x="788" y="265" fill="#fff" font-size="15" font-weight="700">Dune: Part Two</text>
+      <text class="sans" x="788" y="283" fill="#fff" fill-opacity=".7" font-size="11">MKV · 2160p · 2h 46m</text>
+
+      <rect x="775" y="316" width="351" height="5" rx="2.5" fill="#3d3935"/>
+      <rect x="775" y="316" width="126" height="5" rx="2.5" fill="url(#accent)"/>
+      <circle cx="901" cy="318.5" r="6.5" fill="#fff"/>
+      <text class="sans" x="775" y="341" fill="#898076" font-size="10.5">59:00</text>
+      <text class="sans" x="1126" y="341" fill="#898076" font-size="10.5" text-anchor="end">-1:47:00</text>
+
+      <g class="sans" fill="none" stroke="#f5f2ed" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M907 387a14 14 0 1 1-2-8" stroke-width="2"/>
+        <path d="m904 373 2 7 7-2" stroke-width="2"/>
+        <text x="907" y="391" fill="#f5f2ed" stroke="none" font-size="8" font-weight="700" text-anchor="middle">10</text>
+        <path d="M1053 387a14 14 0 1 0 2-8" stroke-width="2"/>
+        <path d="m1056 373-2 7-7-2" stroke-width="2"/>
+        <text x="1053" y="391" fill="#f5f2ed" stroke="none" font-size="8" font-weight="700" text-anchor="middle">10</text>
+      </g>
+
+      <g filter="url(#buttonShadow)">
+        <circle cx="980" cy="386" r="30" fill="url(#accent)"/>
+        <rect x="971" y="377" width="5" height="18" rx="1.5" fill="#3e281a"/>
+        <rect x="984" y="377" width="5" height="18" rx="1.5" fill="#3e281a"/>
+      </g>
+
+      <line x1="775" y1="532" x2="1126" y2="532" stroke="#fff" stroke-opacity=".09"/>
+
+      <g transform="translate(775 546)">
+        <rect width="34" height="34" rx="9" fill="none" stroke="#fff" stroke-opacity=".09"/>
+        <path d="M9 14h5l5-4v14l-5-4H9z" fill="#bcb3a8"/>
+        <path d="M22 13a6 6 0 0 1 0 8" fill="none" stroke="#bcb3a8" stroke-width="1.6" stroke-linecap="round"/>
+      </g>
+      <rect x="823" y="561" width="185" height="4" rx="2" fill="#3d3935"/>
+      <rect x="823" y="561" width="130" height="4" rx="2" fill="#bcb3a8"/>
+      <circle cx="953" cy="563" r="5.5" fill="#f5f2ed"/>
+      <g transform="translate(1022 546)">
+        <rect width="40" height="34" rx="9" fill="#f4b569"/>
+        <text class="sans" x="20" y="22" fill="#3e281a" font-size="12" font-weight="800" text-anchor="middle">CC</text>
+      </g>
+      <g transform="translate(1076 546)">
+        <rect width="34" height="34" rx="9" fill="none" stroke="#fff" stroke-opacity=".09"/>
+        <rect x="12" y="12" width="10" height="10" rx="2" fill="#bcb3a8"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -5,8 +5,8 @@ edition = "2024"
 description = "Stream a local movie to a Google Cast-enabled TV"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/marek-nogiec/dropcast"
-keywords = ["chromecast", "cast", "stream", "movie", "cli"]
-categories = ["command-line-utilities", "multimedia"]
+keywords = ["chromecast", "cast", "stream", "movie", "macos"]
+categories = ["gui", "multimedia", "command-line-utilities"]
 
 [dependencies]
 async-channel = "2.5"
