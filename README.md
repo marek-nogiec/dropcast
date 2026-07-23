@@ -1,7 +1,7 @@
 # dropcast
 
-A small, fast Rust CLI for streaming a local movie to a Chromecast or a TV with
-Google Cast built in.
+A small Rust app and CLI for streaming a local movie to a Chromecast or a TV
+with Google Cast built in.
 
 `dropcast` discovers receivers on the local network, presents an arrow-key
 device picker, and serves the movie with byte-range support for seeking. It also
@@ -16,6 +16,8 @@ discovers subtitle tracks and lets you switch between them during playback.
 - Bundled FFmpeg for embedded text subtitle discovery and conversion
 - Repeatable explicit `--subtitle` files
 - Live keyboard subtitle picker with a `None` option selected by default
+- Native macOS drag-and-drop app for Apple silicon
+- Explicit receiver confirmation plus playback, volume, seeking, and subtitle controls
 
 ## Build
 
@@ -33,6 +35,40 @@ The standalone executable is created at:
 target/release/dropcast
 ```
 
+On an Apple-silicon Mac, launch the development version of the desktop app with:
+
+```sh
+cargo run --release --bin dropcast-app
+```
+
+Drop a movie onto the window (or use **Browse files…**), select a receiver, and
+confirm with the Cast button. The app keeps the existing direct-LAN streaming
+behavior and adds native playback controls without uploading the movie. Its
+light and dark appearances follow the macOS system setting automatically.
+
+### Build a macOS app
+
+After building the FFmpeg bundle, create a standard Apple-silicon app bundle:
+
+```sh
+scripts/package-macos-app.sh
+open target/macos/Dropcast.app
+```
+
+The bundle is written to `target/macos/Dropcast.app`. The script supplies the
+Finder/Dock icon, local-network privacy description, Bonjour service declaration,
+and an ad-hoc signature suitable for local use. To sign with an installed
+Developer ID certificate instead, set `CODE_SIGN_IDENTITY`:
+
+```sh
+CODE_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+  scripts/package-macos-app.sh
+```
+
+Distribution outside your own Mac also requires Apple notarization (normally
+with `xcrun notarytool`) and stapling the accepted ticket to the app. The script
+deliberately does not send artifacts or credentials to Apple.
+
 FFmpeg is compressed inside that executable. After building the FFmpeg bundle,
 install `dropcast` in Cargo's binary directory with:
 
@@ -43,17 +79,26 @@ cargo install --path .
 ## Download
 
 [GitHub releases](https://github.com/marek-nogiec/dropcast/releases/latest)
-include a native macOS ARM64 build for Apple Silicon. Download the `.tar.gz`
-archive and its matching `SHA256SUMS.txt` file into the same directory, then
-verify and install it with:
+include a native macOS ARM64 app for Apple Silicon. Download the `.app.zip` and
+matching `SHA256SUMS.txt`, verify it, then extract and move `Dropcast.app` to
+Applications:
 
 ```sh
-shasum -a 256 -c dropcast-*-SHA256SUMS.txt
+grep 'macos-arm64.app.zip' dropcast-*-SHA256SUMS.txt | shasum -a 256 -c -
+ditto -x -k dropcast-*-macos-arm64.app.zip .
+sudo mv Dropcast.app /Applications/
+```
+
+The release also includes the command-line version as a `.tar.gz`:
+
+```sh
+grep 'macos-arm64.tar.gz' dropcast-*-SHA256SUMS.txt | shasum -a 256 -c -
 tar -xzf dropcast-*-macos-arm64.tar.gz
 sudo install -m 0755 dropcast-*-macos-arm64/dropcast /usr/local/bin/dropcast
 ```
 
-Release binaries are currently unsigned and not notarized.
+The app bundle is ad-hoc signed and the CLI is unsigned. Neither artifact is
+notarized, so macOS may require explicit approval before first launch.
 
 ## Releases
 
@@ -65,7 +110,7 @@ commit types do not start a release by themselves.
 
 Merging the release pull request updates `Cargo.toml`, `Cargo.lock`, this
 changelog, and the release manifest; creates a `v<version>` tag and GitHub
-release; and builds and attaches the macOS artifact.
+release; and builds and attaches both the macOS app and CLI artifacts.
 
 ## Development
 

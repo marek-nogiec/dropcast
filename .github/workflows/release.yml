@@ -56,7 +56,7 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
   release:
-    name: Build and upload macOS ARM64 artifact
+    name: Build and upload macOS ARM64 artifacts
     needs: release_please
     if: needs.release_please.outputs.created == 'true'
     runs-on: macos-15
@@ -118,11 +118,24 @@ jobs:
           file target/release/dropcast | grep -q "arm64"
           test "$(target/release/dropcast --version)" = "$RELEASE_VERSION"
 
+      - name: Build and verify macOS app
+        run: |
+          scripts/package-macos-app.sh
+          test -s target/macos/Dropcast.app/Contents/Resources/AppIcon.icns
+          test "$(plutil -extract CFBundleShortVersionString raw -o - \
+            target/macos/Dropcast.app/Contents/Info.plist)" = "$RELEASE_VERSION"
+          test "$(plutil -extract CFBundleIconFile raw -o - \
+            target/macos/Dropcast.app/Contents/Info.plist)" = "AppIcon.icns"
+          file target/macos/Dropcast.app/Contents/MacOS/Dropcast
+          file target/macos/Dropcast.app/Contents/MacOS/Dropcast | grep -q "arm64"
+          codesign --verify --deep --strict --verbose=2 target/macos/Dropcast.app
+
       - name: Package release
         id: package
         run: |
           package_name="dropcast-${RELEASE_VERSION}-macos-arm64"
           archive="${package_name}.tar.gz"
+          app_archive="${package_name}.app.zip"
           source_archive="ffmpeg-6.1.6.tar.xz"
           checksum_file="dropcast-${RELEASE_VERSION}-SHA256SUMS.txt"
 
@@ -131,28 +144,40 @@ jobs:
             "dist/${package_name}/"
           cp -R LICENSES scripts "dist/${package_name}/"
           COPYFILE_DISABLE=1 tar -C dist -czf "dist/${archive}" "${package_name}"
+          ditto -c -k --sequesterRsrc --keepParent \
+            target/macos/Dropcast.app "dist/${app_archive}"
           cp "$RUNNER_TEMP/${source_archive}" "dist/${source_archive}"
 
           archive_checksum="$(shasum -a 256 "dist/${archive}" | awk '{print $1}')"
+          app_checksum="$(shasum -a 256 "dist/${app_archive}" | awk '{print $1}')"
           source_checksum="$(shasum -a 256 "dist/${source_archive}" | awk '{print $1}')"
           {
             printf '%s  %s\n' "$archive_checksum" "$archive"
+            printf '%s  %s\n' "$app_checksum" "$app_archive"
             printf '%s  %s\n' "$source_checksum" "$source_archive"
           } > "dist/${checksum_file}"
 
+          verify_dir="$(mktemp -d "$RUNNER_TEMP/dropcast-app-verify.XXXXXX")"
+          ditto -x -k "dist/${app_archive}" "$verify_dir"
+          codesign --verify --deep --strict --verbose=2 \
+            "$verify_dir/Dropcast.app"
+
           {
             echo "archive=dist/${archive}"
+            echo "app=dist/${app_archive}"
             echo "checksum=dist/${checksum_file}"
             echo "source=dist/${source_archive}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload artifacts to GitHub release
         env:
+          APP: ${{ steps.package.outputs.app }}
           ARCHIVE: ${{ steps.package.outputs.archive }}
           CHECKSUM: ${{ steps.package.outputs.checksum }}
           SOURCE: ${{ steps.package.outputs.source }}
         run: |
           gh release upload "$RELEASE_TAG" \
+            "$APP#Dropcast macOS ARM64 app" \
             "$ARCHIVE#macOS ARM64 archive" \
             "$CHECKSUM#SHA-256 checksums" \
             "$SOURCE#Corresponding FFmpeg source" \
