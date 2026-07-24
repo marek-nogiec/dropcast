@@ -1,6 +1,6 @@
 # Dropcast
 
-[Website](https://marek-nogiec.github.io/dropcast/) ·
+[Website](https://nogiec.org/dropcast/) ·
 [Downloads](https://github.com/marek-nogiec/dropcast/releases/latest) ·
 [Source code](https://github.com/marek-nogiec/dropcast)
 
